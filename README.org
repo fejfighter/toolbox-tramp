@@ -8,19 +8,20 @@ This means container commands will run as a user and not as root.
 
 ** Finding a file inside a container:
 
-```
+#+begin_src 
 /toolbox:<container>:path/to/file
-```
+#+end_src
+
 The `<container>` flag is entirely optional and will select the default created toolbox container (`fedora-container-35`) if one exists.
 
 ** Instalation
 *** Straight
-```
+#+begin_src emacs-lisp
 (use-package toolbox-tramp
   :straight (toolbox-tramp :type git
 			   :host github
 			   :repo "fejfighter/toolbox-tramp"))
-```
+#+end_src 
 
 ** Known Issues
 *** Flatpak and process
