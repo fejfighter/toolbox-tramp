@@ -1,5 +1,5 @@
 * Toolbox over TRAMP
-** specifcially toolbox support
+** specifically toolbox support
 
 Access Toolbox containers found on Fedora Silverblue (and workstation Fedora if you create them)
 
@@ -14,7 +14,7 @@ This means container commands will run as a user and not as root.
 
 The `<container>` flag is entirely optional and will select the default created toolbox container (`fedora-container-35`) if one exists.
 
-** Instalation
+** Installation
 *** Straight
 #+begin_src emacs-lisp
 (use-package toolbox-tramp
