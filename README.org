@@ -1,0 +1,28 @@
+* Toolbox over TRAMP
+** specifcially toolbox support
+
+Access Toolbox containers found on Fedora Silverblue (and workstation Fedora if you create them)
+
+Inspired by docker-tramp, this instead uses toolbox commands for access to get podman/toolbox to stop pretending it's docker
+This means container commands will run as a user and not as root.
+
+** Finding a file inside a container:
+
+```
+/toolbox:<container>:path/to/file
+```
+The `<container>` flag is entirely optional and will select the default created toolbox container (`fedora-container-35`) if one exists.
+
+** Instalation
+*** Straight
+```
+(use-package toolbox-tramp
+  :straight (toolbox-tramp :type git
+			   :host github
+			   :repo "fejfighter/toolbox-tramp"))
+```
+
+** Known Issues
+*** Flatpak and process
+Currently it will happily connect to the toolbox container, but there seems to be issues with launching the process.
+
