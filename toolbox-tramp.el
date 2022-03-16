@@ -1,4 +1,5 @@
 (require 'tramp)
+
 (defgroup toolbox-tramp nil
   "TRAMP integration for toolbox containers."
   :prefix "toolbox-tramp-"
@@ -11,6 +12,7 @@
   :type '(choice
           (const "toolbox")
           (const "podman")
+	  (const "flatpak-spawn --host podman")
           (string))
   :group 'toolbox-tramp)
 
@@ -24,9 +26,13 @@
 (defconst toolbox-tramp-method "toolbox"
   "Method to connect toolbox containers.")
 
+(defun toolbox-tramp-containers (&optional ignored)
+  "Return known toolbox containers."
+  (mapcar (lambda (x) (list nil (cadr (split-string x)))) (cdr (process-lines "toolbox" "list" "-c"))))
+
 ;;;###autoload
 (defconst toolbox-tramp-completion-function-alist
-  '()
+  '((toolbox-tramp-containers ""))
   "Default list of (FUNCTION FILE) pairs to be examined for toolbox method.")
 
 
@@ -40,12 +46,14 @@
                  (tramp-remote-shell       "/bin/sh")
                  (tramp-remote-shell-args  ("-i" "-c")))))
 
-(add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method nil ""))
+(add-to-list 'tramp-default-host-alist '(,toolbox-tramp-method nil ""))
 
 ;;;###autoload
 (eval-after-load 'tramp
   '(progn
      (toolbox-tramp-add-method)
-     (tramp-set-completion-function toolbox-tramp-method toolbox-tramp-completion-function-alist)))
+     (tramp-set-completion-function
+      toolbox-tramp-method
+      toolbox-tramp-completion-function-alist)))
 
 (provide 'toolbox-tramp)
