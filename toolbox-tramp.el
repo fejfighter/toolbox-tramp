@@ -75,7 +75,7 @@
                  (tramp-remote-shell       "/bin/sh")
                  (tramp-remote-shell-args  ("-i" "-c")))))
 
-(add-to-list 'tramp-default-host-alist '(,toolbox-tramp-method nil ""))
+(add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method nil ""))
 
 ;;;###autoload
 (eval-after-load 'tramp
