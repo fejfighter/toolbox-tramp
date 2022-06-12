@@ -41,7 +41,7 @@
   :type '(choice
           (const "toolbox")
           (const "podman")
-	  (const "flatpak-spawn --host podman")
+	  (const "flatpak-spawn --forward-fd=1,2 --host podman")
           (string))
   :group 'toolbox-tramp)
 
@@ -75,7 +75,7 @@
                  (tramp-remote-shell       "/bin/sh")
                  (tramp-remote-shell-args  ("-i" "-c")))))
 
-(add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method nil ""))
+(add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method nil "fedora-toolbox-36"))
 
 ;;;###autoload
 (eval-after-load 'tramp
