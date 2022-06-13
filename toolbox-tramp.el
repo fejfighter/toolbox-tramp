@@ -74,7 +74,7 @@
 ;;;###autoload
 (defun toolbox-tramp-login-args ()
   "returns the correct login args for the connection type"
-  (if (eq toolbox-tramp-toolbox-executable "toolbox")
+  (if (string= toolbox-tramp-toolbox-executable "toolbox")
     toolbox-tramp-toolbox-args
     toolbox-tramp-podman-args))
 
@@ -82,7 +82,7 @@
 (defun toolbox-tramp-login-program ()
   "determine the default login string"
   (mapconcat #'identity (append (toolbox-tramp-flatpak)
-	  (if (eq toolbox-tramp-toolbox-executable "podman")
+	  (if (string= toolbox-tramp-toolbox-executable "podman")
 	      '("podman")
 	    '("toolbox"))) " " ))
 
