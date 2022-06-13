@@ -1,3 +1,4 @@
+
 * Toolbox over TRAMP
 ** specifically toolbox support
 
@@ -12,18 +13,16 @@ This means container commands will run as a user and not as root.
 /toolbox:<container>:path/to/file
 #+end_src
 
-The `<container>` flag is entirely optional and will select the default created toolbox container (`fedora-container-35`) if one exists.
+The `<container>` flag is entirely optional and will select the default created toolbox container (`fedora-container-36`) if one exists.
 
 ** Installation
 *** Straight
 #+begin_src emacs-lisp
-(use-package toolbox-tramp
-  :straight (toolbox-tramp :type git
-			   :host github
-			   :repo "fejfighter/toolbox-tramp"))
+  (use-package toolbox-tramp
+    :straight (toolbox-tramp :type git
+			     :host github
+			     :repo "fejfighter/toolbox-tramp")
+    :custom
+    (toolbox-tramp-toolbox-executable "podman") ; use podman when connecting - helps with lsp
+    (toolbox-tramp-flatpak-wrap t)) ; Use `flatpak-spawn' when conecting
 #+end_src 
-
-** Known Issues
-*** Flatpak and process
-Currently it will happily connect to the toolbox container, but there seems to be issues with launching the process.
-
