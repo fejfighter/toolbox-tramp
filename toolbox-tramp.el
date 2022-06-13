@@ -36,6 +36,7 @@
   :link '(url-link :tag "Github" "https://github.com/fejfighter/toolbox-tramp.el")
   :link '(emacs-commentary-link :tag "Commentary" "toolbox-tramp"))
 
+;;;###autoload
 (defcustom toolbox-tramp-toolbox-executable "podman"
   "Path to toolbox (or compatible) executable."
   :type '(choice
@@ -43,6 +44,7 @@
 	  (const "podman"))
   :group 'toolbox-tramp)
 
+;;;###autoload
 (defcustom toolbox-tramp-flatpak-wrap nil
   "Connect via `flatpak-spawn'"
   :type '(boolean)
@@ -55,12 +57,6 @@
     (if toolbox-tramp-flatpak-wrap
 	toolbox-tramp-flatpak-spawn-cmd
       ""))
-
-;;;###autoload
-(defcustom toolbox-tramp-toolbox-options nil
-  "List of toolbox options."
-  :type '(repeat string)
-  :group 'toolbox-tramp)
 
 ;;;###autoload
 (defconst toolbox-tramp-method "toolbox"
@@ -108,7 +104,7 @@
 (defconst toolbox-tramp-default-prefix "fedora-toolbox-")
 
 (defvar toolbox-tramp-default-container
-  (if (eq toolbox-tramp-toolbox-executable "podman")
+  (if (string= toolbox-tramp-toolbox-executable "podman")
       (with-temp-buffer
 	(insert-file-contents "/etc/os-release")
 	(keep-lines "VERSION_ID" (point-min) (point-max))
@@ -117,7 +113,7 @@
     nil))
 
 (defvar toolbox-tramp-default-user
-  (if (eq toolbox-tramp-toolbox-executable "podman")
+  (if (string= toolbox-tramp-toolbox-executable "podman")
       (user-login-name)
       nil))
 
