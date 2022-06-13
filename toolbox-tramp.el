@@ -4,7 +4,7 @@
 
 ;; Author: Jeff Walsh <fejfighter@gmail.com>
 ;; Keywords: convenience, tools
-;; Version: 0.2.0
+;; Version: 0.3.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -36,14 +36,25 @@
   :link '(url-link :tag "Github" "https://github.com/fejfighter/toolbox-tramp.el")
   :link '(emacs-commentary-link :tag "Commentary" "toolbox-tramp"))
 
-(defcustom toolbox-tramp-toolbox-executable "toolbox"
+(defcustom toolbox-tramp-toolbox-executable "podman"
   "Path to toolbox (or compatible) executable."
   :type '(choice
-          (const "toolbox")
-          (const "podman")
-	  (const "flatpak-spawn --forward-fd=1,2 --host podman")
-          (string))
+	  (const "toolbox")
+	  (const "podman"))
   :group 'toolbox-tramp)
+
+(defcustom toolbox-tramp-flatpak-wrap nil
+  "Connect via `flatpak-spawn'"
+  :type '(boolean)
+  :group 'toolbox-tramp)
+
+(defconst toolbox-tramp-flatpak-spawn-cmd '("flatpak-spawn" "--host"))
+
+(defun toolbox-tramp-flatpak ()
+    "Wrap commands with `flatpak-spawn' when running inside flatpak"
+    (if toolbox-tramp-flatpak-wrap
+	toolbox-tramp-flatpak-spawn-cmd
+      ""))
 
 ;;;###autoload
 (defcustom toolbox-tramp-toolbox-options nil
@@ -57,25 +68,61 @@
 
 (defun toolbox-tramp-containers (&optional ignored)
   "Return known toolbox containers."
-  (mapcar (lambda (x) (list nil (cadr (split-string x)))) (cdr (process-lines "toolbox" "list" "-c"))))
+  (let* ((args . ((append (toolbox-tramp-flatpak) '("toolbox" "list" "-c")))))
+    (mapcar (lambda (x) (list nil (cadr (split-string x))))
+	    (cdr (apply 'process-lines  args)))))
+
+(defconst toolbox-tramp-toolbox-args '(("enter") ("h5")))
+(defconst toolbox-tramp-podman-args '(("exec" "-it") ("-u" "%u") ("%h") ("sh")))
+
+;;;###autoload
+(defun toolbox-tramp-login-args ()
+  "returns the correct login args for the connection type"
+  (if (eq toolbox-tramp-toolbox-executable "toolbox")
+    toolbox-tramp-toolbox-args
+    toolbox-tramp-podman-args))
+
+;;;###autoload
+(defun toolbox-tramp-login-program ()
+  "determine the default login string"
+  (mapconcat #'identity (append (toolbox-tramp-flatpak)
+	  (if (eq toolbox-tramp-toolbox-executable "podman")
+	      '("podman")
+	    '("toolbox"))) " " ))
 
 ;;;###autoload
 (defconst toolbox-tramp-completion-function-alist
   '((toolbox-tramp-containers ""))
   "Default list of (FUNCTION FILE) pairs to be examined for toolbox method.")
 
-
 ;;;###autoload
 (defun toolbox-tramp-add-method ()
   "Add toolbox tramp method."
   (add-to-list 'tramp-methods
-               `(,toolbox-tramp-method
-                 (tramp-login-program      ,toolbox-tramp-toolbox-executable)
-                 (tramp-login-args         (("enter") ("%h")))
-                 (tramp-remote-shell       "/bin/sh")
-                 (tramp-remote-shell-args  ("-i" "-c")))))
+	       `(,toolbox-tramp-method
+		 (tramp-login-program      ,(toolbox-tramp-login-program))
+		 (tramp-login-args         ,(toolbox-tramp-login-args))
+		 (tramp-remote-shell       "/bin/sh")
+		 (tramp-remote-shell-args  ("-i" "-c")))))
 
-(add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method nil "fedora-toolbox-36"))
+(defconst toolbox-tramp-default-prefix "fedora-toolbox-")
+
+(defvar toolbox-tramp-default-container
+  (if (eq toolbox-tramp-toolbox-executable "podman")
+      (with-temp-buffer
+	(insert-file-contents "/etc/os-release")
+	(keep-lines "VERSION_ID" (point-min) (point-max))
+	(concat toolbox-tramp-default-prefix (when (string-match "VERSION_ID=\\(.*\\)" (buffer-string))
+					       (match-string 1 (buffer-string)))))
+    nil))
+
+(defvar toolbox-tramp-default-user
+  (if (eq toolbox-tramp-toolbox-executable "podman")
+      (user-login-name)
+      nil))
+
+(add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method ,toolbox-tramp-default-user ,toolbox-tramp-default-container))
+(add-to-list 'tramp-default-user-alist `("\\`toolbox\\'" nil ,toolbox-tramp-default-user))
 
 ;;;###autoload
 (eval-after-load 'tramp
