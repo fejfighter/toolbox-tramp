@@ -4,8 +4,9 @@
 
 Access Toolbox containers found on Fedora Silverblue (and workstation Fedora if you create them)
 
-Inspired by docker-tramp, this instead uses toolbox commands for access to get podman/toolbox to stop pretending it's docker
-This means container commands will run as a user and not as root.
+Inspired by docker-tramp, but largely diverged at this point.
+Using `podman` directly, with some knowledge of toolbox, to access rootless (pet) containers with tramp.
+This means container commands will run as a user and not as root, just like using `toolbox enter`
 
 ** Finding a file inside a container:
 
@@ -23,6 +24,5 @@ The `<container>` flag is entirely optional and will select the default created 
 			     :host github
 			     :repo "fejfighter/toolbox-tramp")
     :custom
-    (toolbox-tramp-toolbox-executable "podman") ; use podman when connecting - helps with lsp
     (toolbox-tramp-flatpak-wrap t)) ; Use `flatpak-spawn' when conecting
 #+end_src 
