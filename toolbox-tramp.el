@@ -33,16 +33,8 @@
   "TRAMP integration for toolbox containers."
   :prefix "toolbox-tramp-"
   :group 'applications
-  :link '(url-link :tag "Github" "https://github.com/fejfighter/toolbox-tramp.el")
+  :link '(url-link :tag "Github" "https://github.com/fejfighter/toolbox-tramp")
   :link '(emacs-commentary-link :tag "Commentary" "toolbox-tramp"))
-
-;;;###autoload
-(defcustom toolbox-tramp-toolbox-executable "podman"
-  "Path to toolbox (or compatible) executable."
-  :type '(choice
-	  (const "toolbox")
-	  (const "podman"))
-  :group 'toolbox-tramp)
 
 ;;;###autoload
 (defcustom toolbox-tramp-flatpak-wrap nil
@@ -50,6 +42,7 @@
   :type '(boolean)
   :group 'toolbox-tramp)
 
+(defconst toolbox-tramp-executable "podman")
 (defconst toolbox-tramp-flatpak-spawn-cmd '("flatpak-spawn" "--host"))
 
 (defun toolbox-tramp-flatpak ()
@@ -58,38 +51,69 @@
 	toolbox-tramp-flatpak-spawn-cmd
       ""))
 
-;;;###autoload
-(defconst toolbox-tramp-method "toolbox"
-  "Method to connect toolbox containers.")
+(defconst toolbox-tramp-podman-list `(,toolbox-tramp-executable "container" "list" "--format={{.Names}}"))
+(defconst toolbox-tramp-podman-label-filter '("-f=label=com.github.containers.toolbox=true"))
 
-(defun toolbox-tramp-containers (&optional ignored)
-  "Return known toolbox containers."
-  (let* ((args . ((append (toolbox-tramp-flatpak) '("toolbox" "list" "-c")))))
-    (mapcar (lambda (x) (list nil (cadr (split-string x))))
-	    (cdr (apply 'process-lines  args)))))
+(defun toolbox-tramp-toolbox-containers (&optional ignored)
+  "Return known running toolbox containers."
+  (let* ((args . ((append (toolbox-tramp-flatpak)
+			  toolbox-tramp-podman-list
+			  toolbox-tramp-podman-label-filter
+			  ))))
+    (mapcar (lambda (x) (list nil x))
+	    (apply 'process-lines args))))
 
-(defconst toolbox-tramp-toolbox-args '(("enter") ("%h ")))
+
+
+(defun toolbox-tramp-stopped-toolbox-containers (&optional ignored)
+  "Return known toolbox stopped containers."
+  (let* ((args . ((append (toolbox-tramp-flatpak) '(toolbox-tramp-podman-list
+						    toolbox-tramp-podman-label-filter
+						    "-f=status=exited"
+						    "-f=status=created"
+						    "-f=status=paused")))))
+    (apply 'process-lines  args)))
+
+(defun toolbox-tramp-all-containers (&optional ignored)
+  "Return known running podman containers."
+  (let* ((args . ((append (toolbox-tramp-flatpak)
+			  toolbox-tramp-podman-list))))
+    (mapcar (lambda (x) (list nil x))
+	    (apply 'process-lines args))))
+
+(defun toolbox-tramp-start-toolbox ()
+  (interactive)
+  (let ((container . ((completing-read "Start Container" (toolbox-tramp-stopped-toolbox-containers)) )))
+    (let ((args . ((append (toolbox-tramp-flatpak) `(,toolbox-tramp-executable "container" "start")))))
+    	 (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container))))))
+
 (defconst toolbox-tramp-podman-args '(("exec" "-it") ("-u" "%u") ("%h") ("sh")))
 
 ;;;###autoload
 (defun toolbox-tramp-login-args ()
   "returns the correct login args for the connection type"
-  (if (string= toolbox-tramp-toolbox-executable "toolbox")
-    toolbox-tramp-toolbox-args
-    toolbox-tramp-podman-args))
+    toolbox-tramp-podman-args)
 
 ;;;###autoload
 (defun toolbox-tramp-login-program ()
   "determine the default login string"
   (mapconcat #'identity (append (toolbox-tramp-flatpak)
-	  (if (string= toolbox-tramp-toolbox-executable "podman")
-	      '("podman")
-	    '("toolbox"))) " " ))
+				'("podman"))))
+
+;;;###autoload
+(defconst podman-tramp-completion-function-alist
+  '((toolbox-tramp-all-containers ""))
+  "Default list of (FUNCTION FILE) pairs to be examined for podman method.")
+
 
 ;;;###autoload
 (defconst toolbox-tramp-completion-function-alist
-  '((toolbox-tramp-containers ""))
+  '((toolbox-tramp-toolbox-containers ""))
   "Default list of (FUNCTION FILE) pairs to be examined for toolbox method.")
+
+;;;###autoload
+(defconst toolbox-tramp-method "toolbox"
+  "Method to connect toolbox containers.")
 
 ;;;###autoload
 (defun toolbox-tramp-add-method ()
@@ -104,21 +128,33 @@
 (defconst toolbox-tramp-default-prefix "fedora-toolbox-")
 
 (defvar toolbox-tramp-default-container
-  (if (string= toolbox-tramp-toolbox-executable "podman")
       (with-temp-buffer
 	(insert-file-contents "/etc/os-release")
 	(keep-lines "VERSION_ID" (point-min) (point-max))
 	(concat toolbox-tramp-default-prefix (when (string-match "VERSION_ID=\\(.*\\)" (buffer-string))
-					       (match-string 1 (buffer-string)))))
-    nil))
+					       (match-string 1 (buffer-string))))))
 
 (defvar toolbox-tramp-default-user
-  (if (string= toolbox-tramp-toolbox-executable "podman")
-      (user-login-name)
-      nil))
+      (user-login-name))
 
 (add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method ,toolbox-tramp-default-user ,toolbox-tramp-default-container))
 (add-to-list 'tramp-default-user-alist `("\\`toolbox\\'" nil ,toolbox-tramp-default-user))
+
+;;;###autoload
+(defconst podman-tramp-method "podman"
+  "Method to connect toolbox containers.")
+
+;;;###autoload
+(defun podman-tramp-add-method ()
+  "Add toolbox tramp method."
+  (add-to-list 'tramp-methods
+	       `(,podman-tramp-method
+		 (tramp-login-program      ,(toolbox-tramp-login-program))
+		 (tramp-login-args         ,(toolbox-tramp-login-args))
+		 (tramp-remote-shell       "/bin/sh")
+		 (tramp-remote-shell-args  ("-i" "-c")))))
+
+(add-to-list 'tramp-default-user-alist `("\\`podman\\'" nil ,toolbox-tramp-default-user))
 
 ;;;###autoload
 (eval-after-load 'tramp
@@ -126,6 +162,10 @@
      (toolbox-tramp-add-method)
      (tramp-set-completion-function
       toolbox-tramp-method
-      toolbox-tramp-completion-function-alist)))
+      toolbox-tramp-completion-function-alist)
+     (podman-tramp-add-method)
+     (tramp-set-completion-function
+      podman-tramp-method
+      podman-tramp-completion-function-alist)))
 
 (provide 'toolbox-tramp)
