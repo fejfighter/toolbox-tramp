@@ -68,7 +68,7 @@
     (mapcar (lambda (x) (list nil (cadr (split-string x))))
 	    (cdr (apply 'process-lines  args)))))
 
-(defconst toolbox-tramp-toolbox-args '(("enter") ("h5")))
+(defconst toolbox-tramp-toolbox-args '(("enter") ("%h ")))
 (defconst toolbox-tramp-podman-args '(("exec" "-it") ("-u" "%u") ("%h") ("sh")))
 
 ;;;###autoload
