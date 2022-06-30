@@ -97,8 +97,7 @@
 ;;;###autoload
 (defun toolbox-tramp-login-program ()
   "determine the default login string"
-  (mapconcat #'identity (append (toolbox-tramp-flatpak)
-				'("podman"))))
+  (append (toolbox-tramp-flatpak) '("podman")))
 
 ;;;###autoload
 (defconst podman-tramp-completion-function-alist
