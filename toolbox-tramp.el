@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'tramp)
+(eval-when-compile (require 'subr-x))
 
 (defgroup toolbox-tramp nil
   "TRAMP integration for toolbox containers."
@@ -44,15 +45,15 @@
 
 (defconst toolbox-tramp-executable "podman")
 (defconst toolbox-tramp-flatpak-spawn-cmd '("flatpak-spawn" "--host"))
+(defconst toolbox-tramp-podman-args '(("exec" "-it") ("-u" "%u") ("%h") ("sh")))
+(defconst toolbox-tramp-podman-list `(,toolbox-tramp-executable "container" "list" "--format={{.Names}}"))
+(defconst toolbox-tramp-podman-label-filter '("-f=label=com.github.containers.toolbox=true"))
 
 (defun toolbox-tramp-flatpak ()
     "Wrap commands with `flatpak-spawn' when running inside flatpak"
     (if toolbox-tramp-flatpak-wrap
 	toolbox-tramp-flatpak-spawn-cmd
       ""))
-
-(defconst toolbox-tramp-podman-list `(,toolbox-tramp-executable "container" "list" "--format={{.Names}}"))
-(defconst toolbox-tramp-podman-label-filter '("-f=label=com.github.containers.toolbox=true"))
 
 (defun toolbox-tramp-toolbox-containers (&optional ignored)
   "Return known running toolbox containers."
@@ -67,9 +68,9 @@
 
 (defun toolbox-tramp-stopped-toolbox-containers (&optional ignored)
   "Return known toolbox stopped containers."
-  (let* ((args . ((append (toolbox-tramp-flatpak) '(toolbox-tramp-podman-list
+  (let* ((args . ((append (toolbox-tramp-flatpak) toolbox-tramp-podman-list
 						    toolbox-tramp-podman-label-filter
-						    "-f=status=exited"
+						    '("-f=status=exited"
 						    "-f=status=created"
 						    "-f=status=paused")))))
     (apply 'process-lines  args)))
@@ -83,11 +84,9 @@
 
 (defun toolbox-tramp-start-toolbox ()
   (interactive)
-  (let ((container . ((completing-read "Start Container" (toolbox-tramp-stopped-toolbox-containers)) )))
+  (let ((container . ((completing-read "Start Container" (toolbox-tramp-stopped-toolbox-containers)))))
     (let ((args . ((append (toolbox-tramp-flatpak) `(,toolbox-tramp-executable "container" "start")))))
     	 (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container))))))
-
-(defconst toolbox-tramp-podman-args '(("exec" "-it") ("-u" "%u") ("%h") ("sh")))
 
 ;;;###autoload
 (defun toolbox-tramp-login-args ()
@@ -97,7 +96,7 @@
 ;;;###autoload
 (defun toolbox-tramp-login-program ()
   "determine the default login string"
-  (append (toolbox-tramp-flatpak) '("podman")))
+  (string-join (append (toolbox-tramp-flatpak) '("podman")) " " ))
 
 ;;;###autoload
 (defconst podman-tramp-completion-function-alist
@@ -122,7 +121,8 @@
 		 (tramp-login-program      ,(toolbox-tramp-login-program))
 		 (tramp-login-args         ,(toolbox-tramp-login-args))
 		 (tramp-remote-shell       "/bin/sh")
-		 (tramp-remote-shell-args  ("-i" "-c")))))
+		 (tramp-remote-shell-args  ("-c"))))
+)
 
 (defconst toolbox-tramp-default-prefix "fedora-toolbox-")
 
@@ -151,7 +151,7 @@
 		 (tramp-login-program      ,(toolbox-tramp-login-program))
 		 (tramp-login-args         ,(toolbox-tramp-login-args))
 		 (tramp-remote-shell       "/bin/sh")
-		 (tramp-remote-shell-args  ("-i" "-c")))))
+		 (tramp-remote-shell-args  ("-c")))))
 
 (add-to-list 'tramp-default-user-alist `("\\`podman\\'" nil ,toolbox-tramp-default-user))
 
