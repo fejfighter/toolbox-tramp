@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'tramp)
+(require 'tramp-container)
 (eval-when-compile (require 'subr-x))
 
 (defgroup toolbox-tramp nil
@@ -38,7 +39,8 @@
   :link '(emacs-commentary-link :tag "Commentary" "toolbox-tramp"))
 
 (defconst toolbox-tramp-executable "podman")
-(defconst toolbox-tramp-podman-args '(("exec" "-it") ("-u" "%u") ("%h") ("sh")))
+(defconst toolbox-tramp-podman-args '(("exec" "-it") ("-u" "%u") ("%h") ("%l")))
+
 (defconst toolbox-tramp-podman-list `(,toolbox-tramp-executable "container" "list" "--format={{.Names}}"))
 (defconst toolbox-tramp-podman-label-filter '("-f=label=com.github.containers.toolbox=true"))
 
@@ -95,14 +97,16 @@
 	       `(,toolbox-tramp-method
 		 (tramp-login-program      ,toolbox-tramp-executable)
 		 (tramp-login-args         ,(toolbox-tramp-login-args))
-		 (tramp-remote-shell       "/bin/sh")
-		 (tramp-remote-shell-args  ("-c")))))
+		 (tramp-remote-shell       ,tramp-default-remote-shell)
+		 (tramp-remote-shell-login ("-l"))
+		 (tramp-remote-shell-args  ("-i -c")))))
 
 (defconst toolbox-tramp-default-prefix "fedora-toolbox-")
 
 (defvar toolbox-tramp-default-container
       (with-temp-buffer
-	(insert-file-contents "/etc/os-release")
+	(insert-file-contents
+	 (if-let (file-exists-p "/run/host/etc/os-release") "/run/host/etc/os-release" "/etc/os-release"))
 	(keep-lines "VERSION_ID" (point-min) (point-max))
 	(concat toolbox-tramp-default-prefix (when (string-match "VERSION_ID=\\(.*\\)" (buffer-string))
 					       (match-string 1 (buffer-string))))))
@@ -114,31 +118,11 @@
 (add-to-list 'tramp-default-user-alist `("\\`toolbox\\'" nil ,toolbox-tramp-default-user))
 
 ;;;###autoload
-(defconst podman-tramp-method "podman"
-  "Method to connect toolbox containers.")
-
-;;;###autoload
-(defun podman-tramp-add-method ()
-  "Add toolbox tramp method."
-  (add-to-list 'tramp-methods
-	       `(,podman-tramp-method
-		 (tramp-login-program      ,toolbox-tramp-executable)
-		 (tramp-login-args         ,(toolbox-tramp-login-args))
-		 (tramp-remote-shell       "/bin/sh")
-		 (tramp-remote-shell-args  ("-c")))))
-
-(add-to-list 'tramp-default-user-alist `("\\`podman\\'" nil ,toolbox-tramp-default-user))
-
-;;;###autoload
 (eval-after-load 'tramp
   '(progn
      (toolbox-tramp-add-method)
      (tramp-set-completion-function
       toolbox-tramp-method
-      toolbox-tramp-completion-function-alist)
-     (podman-tramp-add-method)
-     (tramp-set-completion-function
-      podman-tramp-method
-      podman-tramp-completion-function-alist)))
+      toolbox-tramp-completion-function-alist)))
 
 (provide 'toolbox-tramp)
