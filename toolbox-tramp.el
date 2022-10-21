@@ -28,7 +28,6 @@
 ;;; Code:
 
 (require 'tramp)
-(require 'tramp-container)
 (eval-when-compile (require 'subr-x))
 
 (defgroup toolbox-tramp nil
