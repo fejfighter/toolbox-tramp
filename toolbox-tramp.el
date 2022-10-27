@@ -47,8 +47,13 @@
   "Return known running toolbox containers."
   (let* ((args . ((append toolbox-tramp-podman-list
 			  toolbox-tramp-podman-label-filter))))
+	    (apply 'process-lines args)))
+
+(defun toolbox-tramp-toolbox-containers-completion (&optional ignored)
+  "Return known running toolbox containers for tramp completion."
     (mapcar (lambda (x) (list nil x))
-	    (apply 'process-lines args))))
+	    (toolbox-tramp-toolbox-containers)))
+
 
 (defun toolbox-tramp-stopped-toolbox-containers (&optional ignored)
   "Return known toolbox stopped containers."
@@ -82,7 +87,7 @@
 
 ;;;###autoload
 (defconst toolbox-tramp-completion-function-alist
-  '((toolbox-tramp-toolbox-containers ""))
+  '((toolbox-tramp-toolbox-containers-completion ""))
   "Default list of (FUNCTION FILE) pairs to be examined for toolbox method.")
 
 ;;;###autoload
