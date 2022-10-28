@@ -27,7 +27,7 @@
 
 (require 'toolbox-tramp)
 
-(defvar toolbox-connected-container "fedora-toolbox-38")
+(defvar toolbox-connected-container nil)
 
 (defun toolbox-select-container (container)
   (interactive
@@ -83,9 +83,9 @@ correctly.")
    (toolbox-mode
     (advice-add 'find-file :filter-args #'toolbox-mode-find-file-advisor)
     (setq toolbox-connected-container toolbox-mode-default-container)
-    (toolbox-tramp-start-toolbox toolbox-connected-container)
+    (toolbox-tramp-start-toolbox toolbox-connected-container))
    ;; Turning the mode OFF.
    (t
-    (advice-remove 'find-file #'toolbox-mode-find-file-advisor)))))
+    (advice-remove 'find-file #'toolbox-mode-find-file-advisor))))
 
 
