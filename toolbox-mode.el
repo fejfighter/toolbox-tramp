@@ -32,7 +32,11 @@
 (defun toolbox-select-container (container)
   (interactive
    (list (completing-read "Which Container:" (toolbox-tramp-toolbox-containers))))
-  (setq toolbox-connected-container container))
+  (setq toolbox-connected-container container)
+  (toolbox-tramp-reopen-file-in-toolbox (current-buffer) container))
+
+(defun toolbox-get-current-container ()
+  toolbox-connected-container)
 
 (defgroup toolbox nil
   "Lock emacs to operate in a container"
@@ -49,10 +53,25 @@
   :type 'string
   :version "28.1")
 
+(defun toolbox-mode--line-title ()
+  `(:propertize
+    ,toolbox-mode-line-lighter
+    mouse-face mode-line-highlight))
+
+(defvar toolbox-mode-line-title `(:eval (toolbox-mode--line-title))
+  "Mode-line construct to show Flymake's mode name and menu.")
+
+(defvar toolbox-mode-line-container `(:eval (toolbox-get-current-container))
+  "Mode-line construct to show Flymake's mode name and menu.")
+
 (defcustom toolbox-mode-line-format
-  `(" "  ,toolbox-mode-line-lighter "[" ,toolbox-connected-container "]")
+  '(" "  toolbox-mode-line-title "[" toolbox-mode-line-container "]")
   "Mode line construct for customizing Toolbox Connection information."
   :type '(repeat (choice string symbol)))
+
+(put 'toolbox-mode-line-format 'risky-local-variable t)
+(put 'toolbox-mode-line-title 'risky-local-variable t)
+(put 'toolbox-mode-line-container 'risky-local-variable t)
 
 (defvar toolbox-mode-line-container-name '(:eval (toolbox-mode--line-container))
   "Mode-line construct for counting Toolbox diagnostics.
