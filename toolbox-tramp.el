@@ -69,12 +69,20 @@
     (mapcar (lambda (x) (list nil x))
 	    (apply 'process-lines toolbox-tramp-podman-list)))
 
-(defun toolbox-tramp-start-toolbox ()
+(defun toolbox-tramp-start-toolbox (container)
   "Start a toolbox container for later connection."
-  (interactive)
-  (let ((container . ((completing-read "Start Container" (toolbox-tramp-stopped-toolbox-containers)))))
+  (interactive
+   (list (completing-read "Which Container" (toolbox-tramp-stopped-toolbox-containers))))
     (let ((args . ((append `(,toolbox-tramp-executable "container" "start")))))
-      (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container))))))
+      (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container)))))
+
+(defun toolbox-tramp--path-for-buffer (path container)
+  (let* ((toolbox . ((concat "/toolbox:" container ":")))
+	 (full-path . ((expand-file-name path)))
+	 (localised-path . ((if (file-remote-p full-path)
+				(file-remote-p full-path 'localname)
+			      full-path))))
+	 (concat toolbox localised-path)))
 
 (defun toolbox-tramp-reopen-file-in-toolbox (buffer container)
   "Reopen a BUFFER inside a toolbox CONTAINER.
@@ -82,12 +90,9 @@
   (interactive (list
 		(read-buffer "Buffer: " (current-buffer) t)
 		(completing-read "Which Container" (toolbox-tramp-toolbox-containers))))
-  (let* ((toolbox . ((concat "/toolbox:" container ":")))
-	 (full-path . ((buffer-file-name (get-buffer buffer))))
-	 (localised-path . ((if (file-remote-p full-path)
-				(file-remote-p full-path 'localname)
-			      full-path))))
-      (find-alternate-file (concat toolbox localised-path))))
+  (find-alternate-file (toolbox-tramp--path-for-buffer
+			(buffer-file-name (get-buffer buffer))
+			 container)))
 
 ;;;###autoload
 (defun toolbox-tramp-login-args ()
