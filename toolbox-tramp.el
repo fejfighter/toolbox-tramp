@@ -73,7 +73,18 @@
   (interactive)
   (let ((container . ((completing-read "Start Container" (toolbox-tramp-stopped-toolbox-containers)))))
     (let ((args . ((append `(,toolbox-tramp-executable "container" "start")))))
-    	 (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container))))))
+      (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container))))))
+
+(defun toolbox-tramp-reopen-file-in-toolbox (buffer container)
+  (interactive (list
+		(read-buffer "Buffer: " (current-buffer) t)
+		(completing-read "Which Container" (toolbox-tramp-toolbox-containers))))
+  (let* ((toolbox . ((concat "/toolbox:" container ":")))
+	 (full-path . ((buffer-file-name (get-buffer buffer))))
+	 (localised-path . ((if (file-remote-p full-path)
+				(file-remote-p full-path 'localname)
+			      full-path))))
+      (find-alternate-file (concat toolbox localised-path))))
 
 ;;;###autoload
 (defun toolbox-tramp-login-args ()
