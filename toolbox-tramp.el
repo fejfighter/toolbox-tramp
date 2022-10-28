@@ -70,12 +70,15 @@
 	    (apply 'process-lines toolbox-tramp-podman-list)))
 
 (defun toolbox-tramp-start-toolbox ()
+  "Start a toolbox container for later connection."
   (interactive)
   (let ((container . ((completing-read "Start Container" (toolbox-tramp-stopped-toolbox-containers)))))
     (let ((args . ((append `(,toolbox-tramp-executable "container" "start")))))
       (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container))))))
 
 (defun toolbox-tramp-reopen-file-in-toolbox (buffer container)
+  "Reopen a BUFFER inside a toolbox CONTAINER.
+ This also allows for changing current container."
   (interactive (list
 		(read-buffer "Buffer: " (current-buffer) t)
 		(completing-read "Which Container" (toolbox-tramp-toolbox-containers))))
