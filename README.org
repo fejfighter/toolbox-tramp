@@ -22,7 +22,5 @@ The `<container>` flag is entirely optional and will select the default created 
   (use-package toolbox-tramp
     :straight (toolbox-tramp :type git
 			     :host github
-			     :repo "fejfighter/toolbox-tramp")
-    :custom
-    (toolbox-tramp-flatpak-wrap t)) ; Use `flatpak-spawn' when conecting
+			     :repo "fejfighter/toolbox-tramp"))
 #+end_src 
