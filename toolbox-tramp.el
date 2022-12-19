@@ -1,10 +1,13 @@
-;;; toolbox-tramp.el --- tramp connection to toolbx containers  -*- lexical-binding: t; -*-
+;;; toolbox-tramp.el --- Tramp connection to toolbx containers  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2022  Jeff Walsh
 
 ;; Author: Jeff Walsh <fejfighter@gmail.com>
 ;; Keywords: convenience, tools
 ;; Version: 0.5.0
+;; URL: https://github.com/fejfighter/toolbox-tramp
+;; Package-Requires: ((eglot "1.9")  (tempel "0.5") (emacs "25.1"))
+
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -100,11 +103,6 @@
     toolbox-tramp-podman-args)
 
 ;;;###autoload
-(defconst podman-tramp-completion-function-alist
-  '((toolbox-tramp-all-containers ""))
-  "Default list of (FUNCTION FILE) pairs to be examined for podman method.")
-
-;;;###autoload
 (defconst toolbox-tramp-completion-function-alist
   '((toolbox-tramp-toolbox-containers-completion ""))
   "Default list of (FUNCTION FILE) pairs to be examined for toolbox method.")
@@ -127,16 +125,16 @@
 (defconst toolbox-tramp-default-prefix "fedora-toolbox-")
 
 (defvar toolbox-tramp-default-container
+  (when (eq system-type 'gnu)
       (with-temp-buffer
 	(insert-file-contents
 	 (if-let (file-exists-p "/run/host/etc/os-release") "/run/host/etc/os-release" "/etc/os-release"))
 	(keep-lines "VERSION_ID" (point-min) (point-max))
 	(concat toolbox-tramp-default-prefix (when (string-match "VERSION_ID=\\(.*\\)" (buffer-string))
-					       (match-string 1 (buffer-string))))))
+					       (match-string 1 (buffer-string)))))))
 
 (defvar toolbox-tramp-default-user
       (user-login-name))
-
 (add-to-list 'tramp-default-host-alist `(,toolbox-tramp-method ,toolbox-tramp-default-user ,toolbox-tramp-default-container))
 (add-to-list 'tramp-default-user-alist `("\\`toolbox\\'" nil ,toolbox-tramp-default-user))
 
@@ -149,3 +147,4 @@
       toolbox-tramp-completion-function-alist)))
 
 (provide 'toolbox-tramp)
+;;; toolbox-tramp.el ends here
