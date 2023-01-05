@@ -46,20 +46,26 @@
 (defconst toolbox-tramp-podman-list `(,toolbox-tramp-executable "container" "list" "--format={{.Names}}"))
 (defconst toolbox-tramp-podman-label-filter '("-f=label=com.github.containers.toolbox=true"))
 
-(defun toolbox-tramp-toolbox-containers (&optional ignored)
-  "Return known running toolbox containers."
+(defun toolbox-tramp-toolbox-containers (&optional filename)
+  "Return known running toolbox containers.
+FILENAME is ignored as this it is sourced from podman"
+  (ignore filename)
   (let* ((args . ((append toolbox-tramp-podman-list
 			  toolbox-tramp-podman-label-filter))))
 	    (apply 'process-lines args)))
 
-(defun toolbox-tramp-toolbox-containers-completion (&optional ignored)
-  "Return known running toolbox containers for tramp completion."
+(defun toolbox-tramp-toolbox-containers-completion (&optional filename)
+  "Return known running toolbox containers for tramp completion.
+FILENAME is ignored as this it is sourced from podman"
+    (ignore filename)
     (mapcar (lambda (x) (list nil x))
 	    (toolbox-tramp-toolbox-containers)))
 
 
-(defun toolbox-tramp-stopped-toolbox-containers (&optional ignored)
-  "Return known toolbox stopped containers."
+(defun toolbox-tramp-stopped-toolbox-containers (&optional filename)
+  "Return known toolbox stopped containers.
+FILENAME is ignored as this it is sourced from podman"
+  (ignore filename)
   (let* ((args . ((append toolbox-tramp-podman-list
 			  toolbox-tramp-podman-label-filter
 			  '("-f=status=exited"
@@ -67,19 +73,22 @@
 			    "-f=status=paused")))))
     (apply 'process-lines args)))
 
-(defun toolbox-tramp-all-containers (&optional ignored)
-  "Return known running podman containers."
+(defun toolbox-tramp-all-containers (&optional filename)
+  "Return known running podman containers.
+FILENAME is ignored as this it is sourced from podman"
+    (ignore filename)
     (mapcar (lambda (x) (list nil x))
 	    (apply 'process-lines toolbox-tramp-podman-list)))
 
 (defun toolbox-tramp-start-toolbox (container)
-  "Start a toolbox container for later connection."
+  "Start a toolbox CONTAINER for later connection."
   (interactive
    (list (completing-read "Which Container" (toolbox-tramp-stopped-toolbox-containers))))
     (let ((args . ((append `(,toolbox-tramp-executable "container" "start")))))
       (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container)))))
 
 (defun toolbox-tramp--path-for-buffer (path container)
+  "For file at PATH format a find file string to open it inside CONTAINER."
   (let* ((toolbox . ((concat "/toolbox:" container ":")))
 	 (full-path . ((expand-file-name path)))
 	 (localised-path . ((if (file-remote-p full-path)
@@ -89,7 +98,7 @@
 
 (defun toolbox-tramp-reopen-file-in-toolbox (buffer container)
   "Reopen a BUFFER inside a toolbox CONTAINER.
- This also allows for changing current container."
+This also allows for changing current container."
   (interactive (list
 		(read-buffer "Buffer: " (current-buffer) t)
 		(completing-read "Which Container" (toolbox-tramp-toolbox-containers))))
@@ -99,7 +108,7 @@
 
 ;;;###autoload
 (defun toolbox-tramp-login-args ()
-  "returns the correct login args for the connection type"
+  "Return the correct login args for the connection type."
     toolbox-tramp-podman-args)
 
 ;;;###autoload
