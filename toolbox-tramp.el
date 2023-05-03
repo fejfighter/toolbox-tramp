@@ -83,7 +83,7 @@ FILENAME is ignored as this it is sourced from podman"
 (defun toolbox-tramp-start-toolbox (container)
   "Start a toolbox CONTAINER for later connection."
   (interactive
-   (list (completing-read "Which Container" (toolbox-tramp-stopped-toolbox-containers))))
+   (list (completing-read "Select container: " (toolbox-tramp-stopped-toolbox-containers))))
     (let ((args . ((append `(,toolbox-tramp-executable "container" "start")))))
       (apply 'call-process (append (list (car args) nil nil nil) (cdr args) (list container)))))
 
@@ -101,7 +101,7 @@ FILENAME is ignored as this it is sourced from podman"
 This also allows for changing current container."
   (interactive (list
 		(read-buffer "Buffer: " (current-buffer) t)
-		(completing-read "Which Container" (toolbox-tramp-toolbox-containers))))
+		(completing-read "Select container: " (toolbox-tramp-toolbox-containers))))
   (find-alternate-file (toolbox-tramp--path-for-buffer
 			(buffer-file-name (get-buffer buffer))
 			 container)))
