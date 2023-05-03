@@ -31,7 +31,7 @@
 
 (defun toolbox-select-container (container)
   (interactive
-   (list (completing-read "Which Container:" (toolbox-tramp-toolbox-containers))))
+   (list (completing-read "Select container: " (toolbox-tramp-toolbox-containers))))
   (setq toolbox-connected-container container)
   (toolbox-tramp-reopen-file-in-toolbox (current-buffer) container))
 
